@@ -1,13 +1,13 @@
 'use strict';
 
-const input = document.querySelector('#input');
-const output = document.querySelector('#output');
-const copy = document.querySelector('#copy');
-const status = document.querySelector('#status');
-const loading = document.querySelector('#loading');
-const formatButton = document.querySelector('#format');
-const editors = document.querySelector('.editors');
-const divider = document.querySelector('#divider');
+const input = dquery('#input');
+const output = dquery('#output');
+const copy = dquery('#copy');
+const status = dquery('#status');
+const loading = dquery('#loading');
+const formatButton = dquery('#format');
+const editors = dquery('.editors');
+const divider = dquery('#divider');
 let result = '';
 let copyTimer;
 let activeWorker;
@@ -15,9 +15,9 @@ let generation = 0;
 let outputData = null;
 let visibleLines = [];
 const collapsed = new Set();
-const outputBody = document.querySelector('#output-body');
+const outputBody = dquery('#output-body');
 const isMac = /Mac|iPhone|iPad/.test(navigator.platform);
-document.querySelector('.shortcut').textContent = isMac ? '⌘ ↵' : 'Ctrl ↵';
+dquery('.shortcut').textContent = isMac ? '⌘ ↵' : 'Ctrl ↵';
 
 // A Blob worker also works when the static site is opened directly from disk.
 function processor() {
@@ -153,7 +153,7 @@ const workerURL = URL.createObjectURL(new Blob([`(${processor.toString()})()`], 
 function setStatus(message, state = '') {
   status.className = `status ${state}`;
   status.hidden = !message;
-  document.querySelector('#status-message').textContent = message;
+  dquery('#status-message').textContent = message;
 }
 function lineNumbers(count) {
   // Keep huge line-number gutters from becoming another expensive document.
@@ -165,37 +165,37 @@ function stopProcessing() {
   activeWorker = null;
   loading.hidden = true;
   formatButton.disabled = false;
-  document.querySelector('.output-pane').setAttribute('aria-busy', 'false');
+  dquery('.output-pane').setAttribute('aria-busy', 'false');
 }
 function resetOutput() {
-  document.querySelector('#output-placeholder').hidden = false;
+  dquery('#output-placeholder').hidden = false;
   result = '';
   outputData = null;
   visibleLines = [];
   collapsed.clear();
   output.style.height = '';
   output.style.paddingTop = '';
-  const gutter = document.querySelector('#output-lines');
+  const gutter = dquery('#output-lines');
   gutter.style.height = '';
   gutter.style.paddingTop = '';
   output.replaceChildren();
-  document.querySelector('#output-lines').textContent = '';
-  document.querySelector('#output-stats').textContent = '';
-  document.querySelector('#valid-indicator').textContent = '';
+  dquery('#output-lines').textContent = '';
+  dquery('#output-stats').textContent = '';
+  dquery('#valid-indicator').textContent = '';
   copy.disabled = true;
   if (findState.scope === 'output') refreshFind();
   clearTimeout(copyTimer);
   copy.classList.remove('copied');
   copy.setAttribute('aria-label', 'Copy JSON');
   copy.title = 'Copy JSON';
-  document.querySelector('#copy-label').textContent = '';
+  dquery('#copy-label').textContent = '';
 }
 function updateInput() {
   stopProcessing();
   const text = input.value;
   const count = text.length < 200000 ? text.split('\n').length : 10001;
-  document.querySelector('#input-lines').textContent = lineNumbers(count);
-  document.querySelector('#input-stats').textContent = `${text.length.toLocaleString()} characters`;
+  dquery('#input-lines').textContent = lineNumbers(count);
+  dquery('#input-stats').textContent = `${text.length.toLocaleString()} characters`;
   input.removeAttribute('aria-invalid');
   setStatus('');
   resetOutput();
@@ -220,32 +220,29 @@ function paintOutput() {
   const start = Math.max(0, Math.floor((outputBody.scrollTop - 12) / 24) - 8);
   const end = Math.min(visibleLines.length, start + Math.ceil(outputBody.clientHeight / 24) + 18);
   const height = visibleLines.length * 24 + 32;
-  const gutter = document.querySelector('#output-lines');
+  const gutter = dquery('#output-lines');
   output.style.height = gutter.style.height = `${height}px`;
   output.style.paddingTop = gutter.style.paddingTop = `${12 + start * 24}px`;
   const fragment = document.createDocumentFragment();
   const numbers = [];
   for (let row = start; row < end; row++) {
     const index = visibleLines[row];
-    const line = document.createElement('span');
-    line.className = 'json-row';
+    const line = dcreate('span', 'json-row');
     const foldEnd = outputData.ends[index];
     if (foldEnd !== undefined) {
-      const button = document.createElement('button');
-      button.className = 'fold-button';
+      const button = dcreate('button', 'fold-button');
       button.style.setProperty('--indent', outputData.rows[index].length - outputData.rows[index].trimStart().length);
       button.dataset.line = index;
       button.setAttribute('aria-expanded', String(!collapsed.has(index)));
       button.setAttribute('aria-label', `${collapsed.has(index) ? 'Expand' : 'Collapse'} line ${index + 1}`);
       line.append(button);
     }
-    const content = document.createElement('span');
+    const content = dcreate('span');
     content.innerHTML = highlightLine(outputData.rows[index]);
     markOutputMatches(content, index);
     line.append(content);
     if (collapsed.has(index)) {
-      const summary = document.createElement('span');
-      summary.className = 'fold-summary';
+      const summary = dcreate('span', 'fold-summary');
       summary.textContent = ` … ${outputData.rows[foldEnd].trimStart()}`;
       line.append(summary);
     }
@@ -257,7 +254,7 @@ function paintOutput() {
 }
 async function render(data, job) {
   if (job !== generation) return;
-  document.querySelector('#output-placeholder').hidden = true;
+  dquery('#output-placeholder').hidden = true;
   result = data.text;
   outputData = data;
   collapsed.clear();
@@ -265,8 +262,8 @@ async function render(data, job) {
   outputBody.scrollTop = 0;
   if (findState.scope === 'output') refreshFind();
   paintOutput();
-  document.querySelector('#output-stats').textContent = `${data.lineCount.toLocaleString()} lines · ${data.bytes.toLocaleString()} bytes`;
-  document.querySelector('#valid-indicator').textContent = data.repaired ? '✓ Repaired JSON' : '✓ Valid JSON';
+  dquery('#output-stats').textContent = `${data.lineCount.toLocaleString()} lines · ${data.bytes.toLocaleString()} bytes`;
+  dquery('#valid-indicator').textContent = data.repaired ? '✓ Repaired JSON' : '✓ Valid JSON';
   copy.disabled = false;
   stopProcessing();
 }
@@ -295,7 +292,7 @@ function format() {
   }
   loading.hidden = false;
   formatButton.disabled = true;
-  document.querySelector('.output-pane').setAttribute('aria-busy', 'true');
+  dquery('.output-pane').setAttribute('aria-busy', 'true');
   const job = generation;
   try {
     activeWorker = new Worker(workerURL);
@@ -326,14 +323,14 @@ input.addEventListener('paste', (event) => {
   requestAnimationFrame(() => setStatus('Pasted successfully.', 'success'));
 });
 input.addEventListener('scroll', () => {
-  document.querySelector('#input-lines').scrollTop = input.scrollTop;
+  dquery('#input-lines').scrollTop = input.scrollTop;
 });
 formatButton.addEventListener('click', format);
-document.querySelector('#cancel').addEventListener('click', () => {
+dquery('#cancel').addEventListener('click', () => {
   stopProcessing();
   resetOutput();
 });
-document.querySelector('#clear').addEventListener('click', () => {
+dquery('#clear').addEventListener('click', () => {
   input.value = '';
   updateInput();
   input.focus();
@@ -344,16 +341,16 @@ copy.addEventListener('click', async () => {
     copy.classList.add('copied');
     copy.setAttribute('aria-label', 'Copied');
     copy.title = 'Copied';
-    document.querySelector('#copy-label').textContent = 'Copied';
+    dquery('#copy-label').textContent = 'Copied';
     clearTimeout(copyTimer);
     copyTimer = setTimeout(() => {
       copy.classList.remove('copied');
       copy.setAttribute('aria-label', 'Copy JSON');
       copy.title = 'Copy JSON';
-      document.querySelector('#copy-label').textContent = '';
+      dquery('#copy-label').textContent = '';
     }, 1800);
   } catch {
-    const temporary = document.createElement('textarea');
+    const temporary = dcreate('textarea');
     temporary.value = result;
     temporary.style.cssText = 'position:fixed;left:-9999px;top:0';
     document.body.append(temporary);
@@ -419,25 +416,27 @@ divider.addEventListener('keydown', (event) => {
 // Search the source data, including rows outside the virtualized viewport.
 const findState = { scope: 'input', matches: [], current: -1 };
 let lastEditor = 'input';
-const findBar = document.createElement('div');
-findBar.className = 'find-bar';
+let findGeneration = 0;
+let findSearching = false;
+const findBar = dcreate('div', 'find-bar');
 findBar.hidden = true;
 findBar.setAttribute('role', 'search');
 findBar.innerHTML = `
   <input id="find-query" type="text" placeholder="Find…" autocomplete="off" spellcheck="false">
+  <span id="find-loading" class="spinner find-spinner" hidden aria-hidden="true"></span>
   <span id="find-count" role="status" aria-live="polite"></span>
   <button type="button" id="find-previous" aria-label="Previous match" title="Previous match (Shift+Enter)">↑</button>
   <button type="button" id="find-next" aria-label="Next match" title="Next match (Enter)">↓</button>
   <button type="button" id="find-close" aria-label="Close search" title="Close search (Escape)">×</button>`;
 const findQuery = findBar.querySelector('#find-query');
 const findCount = findBar.querySelector('#find-count');
+const findLoading = findBar.querySelector('#find-loading');
 const findPrevious = findBar.querySelector('#find-previous');
 const findNext = findBar.querySelector('#find-next');
 // A textarea cannot contain marks; draw their backgrounds in a matching layer.
-const inputHighlights = document.createElement('div');
-inputHighlights.className = 'input-highlights';
+const inputHighlights = dcreate('div', 'input-highlights');
 inputHighlights.setAttribute('aria-hidden', 'true');
-const inputHighlightText = document.createElement('div');
+const inputHighlightText = dcreate('div');
 inputHighlights.append(inputHighlightText);
 input.before(inputHighlights);
 function syncInputHighlights() {
@@ -450,7 +449,7 @@ function paintInputMatches() {
   if (!findBar.hidden && findState.scope === 'input') {
     findState.matches.forEach((match, index) => {
       fragment.append(document.createTextNode(input.value.slice(offset, match.start)));
-      const mark = document.createElement('mark');
+      const mark = dcreate('mark');
       mark.className = index === findState.current ? 'find-current' : 'find-match';
       mark.textContent = input.value.slice(match.start, match.end);
       fragment.append(mark);
@@ -472,40 +471,75 @@ document.addEventListener('focusin', (event) => {
 });
 function updateFindCount() {
   const count = findState.matches.length;
-  findCount.textContent = !findQuery.value ? '' : count ? `${findState.current + 1} of ${count}` : 'No matches';
+  findCount.textContent = !findQuery.value ? '' : count ? `${(findState.current + 1).toLocaleString('en-US')} of ${count.toLocaleString('en-US')}` : 'No matches';
   findPrevious.disabled = findNext.disabled = !count;
 }
-function refreshFind() {
+function setFindSearching(searching) {
+  findSearching = searching;
+  findLoading.hidden = !searching;
+  findBar.setAttribute('aria-busy', String(searching));
+  if (searching) {
+    findCount.textContent = 'Searching…';
+    findPrevious.disabled = findNext.disabled = true;
+  }
+}
+async function refreshFind() {
+  const job = ++findGeneration;
   findState.matches = [];
   findState.current = -1;
-  if (!findBar.hidden && findQuery.value) {
-    const rows = findState.scope === 'input' ? [input.value] : (outputData?.rows || []);
-    rows.forEach((text, row) => {
-      // An escaped literal expression preserves source offsets for Unicode text.
-      const escaped = findQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const pattern = new RegExp(escaped, 'gi');
-      for (const match of text.matchAll(pattern)) {
-        findState.matches.push({ row, start: match.index, end: match.index + match[0].length });
-      }
-    });
-    if (findState.matches.length) findState.current = 0;
+  const query = findQuery.value;
+  const scope = findState.scope;
+  if (findBar.hidden || !query) {
+    setFindSearching(false);
+    updateFindCount();
+    paintInputMatches();
+    paintOutput();
+    return;
   }
-  updateFindCount();
+  setFindSearching(true);
+  // Let the browser paint the spinner before scanning, then yield in batches.
+  await new Promise(resolve => requestAnimationFrame(() => setTimeout(resolve, 0)));
+  if (job !== findGeneration) return;
+  const rows = scope === 'input' ? [input.value] : (outputData?.rows || []);
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const pattern = new RegExp(escaped, 'gi');
+  const matches = [];
+  let batchStart = performance.now();
+  for (let row = 0; row < rows.length; row++) {
+    pattern.lastIndex = 0;
+    for (const match of rows[row].matchAll(pattern)) {
+      matches.push({ row, start: match.index, end: match.index + match[0].length });
+      if (matches.length % 2048 === 0 && performance.now() - batchStart > 12) {
+        await new Promise(resolve => setTimeout(resolve, 0));
+        if (job !== findGeneration) return;
+        batchStart = performance.now();
+      }
+    }
+    if (performance.now() - batchStart > 12) {
+      await new Promise(resolve => setTimeout(resolve, 0));
+      if (job !== findGeneration) return;
+      batchStart = performance.now();
+    }
+  }
+  findState.matches = matches;
+  findState.current = matches.length ? 0 : -1;
   paintInputMatches();
   revealFindMatch();
   paintOutput();
+  setFindSearching(false);
+  updateFindCount();
 }
 function revealFindMatch() {
   const match = findState.matches[findState.current];
   if (!match) return;
   if (findState.scope === 'input') {
     // Measure wrapped text using the textarea's exact width and typography.
-    const mirror = document.createElement('div');
+    const mirror = dcreate('div');
     const style = getComputedStyle(input);
     for (const property of ['font', 'lineHeight', 'letterSpacing', 'padding', 'boxSizing', 'tabSize', 'wordBreak', 'overflowWrap']) mirror.style[property] = style[property];
     mirror.style.cssText += `;position:fixed;visibility:hidden;white-space:pre-wrap;width:${input.clientWidth}px;`;
     mirror.textContent = input.value.slice(0, match.start);
-    const marker = document.createElement('span');
+    const marker = dcreate('span');
     marker.textContent = input.value.slice(match.start, match.end) || ' ';
     mirror.append(marker);
     document.body.append(mirror);
@@ -524,6 +558,7 @@ function revealFindMatch() {
   }
 }
 function moveFind(direction) {
+  if (findSearching) return;
   const count = findState.matches.length;
   if (!count) return;
   findState.current = (findState.current + direction + count) % count;
@@ -554,7 +589,7 @@ function markOutputMatches(content, row) {
       const to = Math.min(node.length, match.index + match[0].length - start);
       if (from >= to) continue;
       fragment.append(document.createTextNode(node.data.slice(position, from)));
-      const mark = document.createElement('mark');
+      const mark = dcreate('mark');
       mark.className = active?.row === row && active.start === match.index ? 'find-current' : 'find-match';
       mark.textContent = node.data.slice(from, to);
       fragment.append(mark);
@@ -565,6 +600,8 @@ function markOutputMatches(content, row) {
   }
 }
 function closeFind() {
+  findGeneration++;
+  setFindSearching(false);
   findBar.hidden = true;
   findState.matches = [];
   findState.current = -1;
@@ -580,7 +617,7 @@ document.addEventListener('keydown', (event) => {
   if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'f') {
     event.preventDefault();
     findState.scope = lastEditor;
-    document.querySelector(`.${lastEditor}-pane .pane-header`).after(findBar);
+    dquery(`.${lastEditor}-pane .pane-header`).after(findBar);
     findBar.hidden = false;
     findQuery.setAttribute('aria-label', `Find in ${lastEditor}`);
     findQuery.focus();
