@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Free online JSON formatter and validator. Fix common JSON errors, extract JSON from text, and explore colored, collapsible output. Runs privately in your browser.">
+  <meta name="theme-color" content="#f5f8fc">
+  <title>Free JSON Formatter &amp; Validator | Fix &amp; Format JSON</title>
+  <link rel="canonical" href="https://json.cadenchau.com/">
+  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:site_name" content="JSON Formatter">
+  <meta property="og:url" content="https://json.cadenchau.com/">
+  <meta property="og:title" content="Free JSON Formatter &amp; Validator">
+  <meta property="og:description" content="Format, validate, and repair JSON in your browser. Syntax highlighting, collapsible output, and one-click copy. Free and private.">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Free JSON Formatter &amp; Validator">
+  <meta name="twitter:description" content="Format, validate, and repair JSON in your browser. Free, simple, and private.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://json.cadenchau.com/#website",
+      "url": "https://json.cadenchau.com/",
+      "name": "JSON Formatter",
+      "inLanguage": "en"
+    },
+    {
+      "@type": "WebApplication",
+      "@id": "https://json.cadenchau.com/#app",
+      "name": "JSON Formatter & Validator",
+      "url": "https://json.cadenchau.com/",
+      "description": "Free online JSON formatter and validator. Fix common JSON errors, extract JSON from text, and explore colored, collapsible output. Runs privately in your browser.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript and a modern web browser.",
+      "isAccessibleForFree": true,
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "featureList": [
+        "JSON formatting and validation",
+        "Automatic repair of common JSON syntax errors",
+        "JSON extraction from text and code fences",
+        "Syntax highlighting",
+        "Collapsible objects and arrays",
+        "Copy formatted JSON",
+        "Wrapped input and resizable panes",
+        "Background processing for large JSON",
+        "Private in-browser processing"
+      ]
+    }
+  ]
+}
+  </script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="app">
+    <noscript>This JSON formatter requires JavaScript to format, validate, and repair JSON locally in your browser.</noscript>
+    <main>
+      <section class="workspace" aria-label="JSON formatter">
+        <div class="toolbar">
+          <div class="header-copy">
+            <h1>JSON formatting. <span>As simple as it gets.</span></h1>
+            <p class="feature-summary">Format, validate &amp; repair JSON. Extract from text, explore syntax highlighting &amp; collapsible objects and arrays, and copy with one click. Wrapped input, resizable panes &amp; large-file support. All in your browser.</p>
+          </div>
+          <div class="actions"><button id="format" class="button primary">Format JSON <span class="shortcut" aria-hidden="true">⌘ ↵</span></button></div>
+        </div>
+        <div class="editors">
+          <div class="pane input-pane">
+            <div class="pane-header"><label for="input">Input</label><div class="pane-actions"><button id="clear" class="icon-button" aria-label="Clear JSON" title="Clear JSON"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18M9 6V4h6v2M5 6l1 14h12l1-14M10 10v6M14 10v6"/></svg></button></div></div>
+            <div class="editor-body"><div id="input-lines" class="line-numbers" aria-hidden="true">1</div><textarea id="input" aria-label="Input JSON" placeholder='Paste JSON…' spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="soft"></textarea></div>
+            <div class="pane-footer"><span id="input-stats">0 characters</span><span>JSON</span></div>
+          </div>
+          <div id="divider" class="resize-divider" role="separator" aria-label="Resize input and output" aria-orientation="vertical" aria-valuemin="20" aria-valuemax="80" aria-valuenow="50" tabindex="0"></div>
+          <div class="pane output-pane">
+            <div class="pane-header"><span>Output</span><div class="pane-actions"><button id="copy" class="icon-button copy-button" aria-label="Copy JSON" title="Copy JSON" disabled><svg class="copy-symbol" viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V4a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h4"/></svg><svg class="copied-symbol" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg><span id="copy-label" class="sr-only" role="status"></span></button></div></div>
+            <div class="output-body" id="output-body"><div id="output-lines" class="line-numbers" aria-hidden="true"></div><pre id="output" tabindex="0" aria-label="Formatted JSON"></pre><div id="output-placeholder" class="output-placeholder">Nothing here yet.</div></div>
+            <div class="pane-footer"><span id="output-stats"></span><span id="valid-indicator"></span></div>
+            <div id="loading" class="loading" hidden role="status"><span class="spinner" aria-hidden="true"></span><span>Formatting…</span><button id="cancel" class="text-button">Cancel</button></div>
+          </div>
+        </div>
+        <div id="status" class="status" hidden role="status" aria-live="polite"><span id="status-message"></span></div>
+      </section>
+    </main>
+  </div>
+</body>
+</html>

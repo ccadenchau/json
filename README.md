@@ -1,0 +1,1 @@
+My favorite json formatter (https://jsonformatter.curiousconcept.com) broke and the alternatives are all shit. 
