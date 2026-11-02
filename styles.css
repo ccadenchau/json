@@ -112,3 +112,19 @@ textarea::-webkit-scrollbar-corner, .output-body::-webkit-scrollbar-corner { bac
 @media (max-width: 700px) {
   .feature-summary { font-size: 10px; line-height: 1.5; }
 }
+
+.find-bar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; padding: 8px 16px; border-bottom: 1px solid var(--border); background: #f0f5fc; font-size: 11px; }
+.find-bar[hidden] { display: none; }
+.find-bar input { flex: 1; min-width: 70px; width: 100px; padding: 6px 8px; border: 1px solid #c8d3e2; border-radius: 5px; font: inherit; }
+.find-bar input:focus { border-color: #2563eb; outline: none; box-shadow: none; }
+.find-bar button { border: 0; border-radius: 4px; padding: 4px 7px; background: white; color: #435775; cursor: pointer; }
+.find-bar button:disabled { cursor: default; }
+#find-count { color: #526782; white-space: nowrap; }
+mark.find-match { background: #fef08a; color: inherit; }
+mark.find-current { background: #fb923c; color: #172033; }
+
+
+.input-highlights { position: absolute; inset: 0 auto 0 0; overflow: hidden; pointer-events: none; font: inherit; color: transparent; }
+.input-highlights > div { padding: 12px 20px 20px 24px; white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 2; font: inherit; }
+.input-highlights mark { color: transparent; }
+.editor-body textarea { position: relative; z-index: 1; }

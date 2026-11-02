@@ -183,6 +183,7 @@ function resetOutput() {
   document.querySelector('#output-stats').textContent = '';
   document.querySelector('#valid-indicator').textContent = '';
   copy.disabled = true;
+  if (findState.scope === 'output') refreshFind();
   clearTimeout(copyTimer);
   copy.classList.remove('copied');
   copy.setAttribute('aria-label', 'Copy JSON');
@@ -198,6 +199,7 @@ function updateInput() {
   input.removeAttribute('aria-invalid');
   setStatus('');
   resetOutput();
+  if (findState.scope === 'input') refreshFind();
 }
 function rebuildVisibleLines() {
   visibleLines = [];
@@ -239,6 +241,7 @@ function paintOutput() {
     }
     const content = document.createElement('span');
     content.innerHTML = highlightLine(outputData.rows[index]);
+    markOutputMatches(content, index);
     line.append(content);
     if (collapsed.has(index)) {
       const summary = document.createElement('span');
@@ -260,6 +263,7 @@ async function render(data, job) {
   collapsed.clear();
   rebuildVisibleLines();
   outputBody.scrollTop = 0;
+  if (findState.scope === 'output') refreshFind();
   paintOutput();
   document.querySelector('#output-stats').textContent = `${data.lineCount.toLocaleString()} lines · ${data.bytes.toLocaleString()} bytes`;
   document.querySelector('#valid-indicator').textContent = data.repaired ? '✓ Repaired JSON' : '✓ Valid JSON';
@@ -410,3 +414,183 @@ divider.addEventListener('keydown', (event) => {
   event.preventDefault();
   resize(value);
 });
+
+
+// Search the source data, including rows outside the virtualized viewport.
+const findState = { scope: 'input', matches: [], current: -1 };
+let lastEditor = 'input';
+const findBar = document.createElement('div');
+findBar.className = 'find-bar';
+findBar.hidden = true;
+findBar.setAttribute('role', 'search');
+findBar.innerHTML = `
+  <input id="find-query" type="text" placeholder="Find…" autocomplete="off" spellcheck="false">
+  <span id="find-count" role="status" aria-live="polite"></span>
+  <button type="button" id="find-previous" aria-label="Previous match" title="Previous match (Shift+Enter)">↑</button>
+  <button type="button" id="find-next" aria-label="Next match" title="Next match (Enter)">↓</button>
+  <button type="button" id="find-close" aria-label="Close search" title="Close search (Escape)">×</button>`;
+const findQuery = findBar.querySelector('#find-query');
+const findCount = findBar.querySelector('#find-count');
+const findPrevious = findBar.querySelector('#find-previous');
+const findNext = findBar.querySelector('#find-next');
+// A textarea cannot contain marks; draw their backgrounds in a matching layer.
+const inputHighlights = document.createElement('div');
+inputHighlights.className = 'input-highlights';
+inputHighlights.setAttribute('aria-hidden', 'true');
+const inputHighlightText = document.createElement('div');
+inputHighlights.append(inputHighlightText);
+input.before(inputHighlights);
+function syncInputHighlights() {
+  inputHighlights.style.width = `${input.clientWidth}px`;
+  inputHighlightText.style.transform = `translate(${-input.scrollLeft}px, ${-input.scrollTop}px)`;
+}
+function paintInputMatches() {
+  const fragment = document.createDocumentFragment();
+  let offset = 0;
+  if (!findBar.hidden && findState.scope === 'input') {
+    findState.matches.forEach((match, index) => {
+      fragment.append(document.createTextNode(input.value.slice(offset, match.start)));
+      const mark = document.createElement('mark');
+      mark.className = index === findState.current ? 'find-current' : 'find-match';
+      mark.textContent = input.value.slice(match.start, match.end);
+      fragment.append(mark);
+      offset = match.end;
+    });
+  }
+  fragment.append(document.createTextNode(input.value.slice(offset) + '\n'));
+  inputHighlightText.replaceChildren(fragment);
+  syncInputHighlights();
+}
+input.addEventListener('scroll', syncInputHighlights);
+input.addEventListener('input', paintInputMatches);
+new ResizeObserver(syncInputHighlights).observe(input);
+
+document.addEventListener('focusin', (event) => {
+  if (findBar.contains(event.target)) return;
+  if (event.target.closest('.output-pane')) lastEditor = 'output';
+  else if (event.target.closest('.input-pane')) lastEditor = 'input';
+});
+function updateFindCount() {
+  const count = findState.matches.length;
+  findCount.textContent = !findQuery.value ? '' : count ? `${findState.current + 1} of ${count}` : 'No matches';
+  findPrevious.disabled = findNext.disabled = !count;
+}
+function refreshFind() {
+  findState.matches = [];
+  findState.current = -1;
+  if (!findBar.hidden && findQuery.value) {
+    const rows = findState.scope === 'input' ? [input.value] : (outputData?.rows || []);
+    rows.forEach((text, row) => {
+      // An escaped literal expression preserves source offsets for Unicode text.
+      const escaped = findQuery.value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const pattern = new RegExp(escaped, 'gi');
+      for (const match of text.matchAll(pattern)) {
+        findState.matches.push({ row, start: match.index, end: match.index + match[0].length });
+      }
+    });
+    if (findState.matches.length) findState.current = 0;
+  }
+  updateFindCount();
+  paintInputMatches();
+  revealFindMatch();
+  paintOutput();
+}
+function revealFindMatch() {
+  const match = findState.matches[findState.current];
+  if (!match) return;
+  if (findState.scope === 'input') {
+    // Measure wrapped text using the textarea's exact width and typography.
+    const mirror = document.createElement('div');
+    const style = getComputedStyle(input);
+    for (const property of ['font', 'lineHeight', 'letterSpacing', 'padding', 'boxSizing', 'tabSize', 'wordBreak', 'overflowWrap']) mirror.style[property] = style[property];
+    mirror.style.cssText += `;position:fixed;visibility:hidden;white-space:pre-wrap;width:${input.clientWidth}px;`;
+    mirror.textContent = input.value.slice(0, match.start);
+    const marker = document.createElement('span');
+    marker.textContent = input.value.slice(match.start, match.end) || ' ';
+    mirror.append(marker);
+    document.body.append(mirror);
+    input.scrollTop = Math.max(0, marker.offsetTop - input.clientHeight / 2);
+    mirror.remove();
+    syncInputHighlights();
+  } else {
+    for (const start of collapsed) {
+      if (start < match.row && outputData.ends[start] >= match.row) collapsed.delete(start);
+    }
+    rebuildVisibleLines();
+    const row = visibleLines.indexOf(match.row);
+    outputBody.scrollTop = Math.max(0, 12 + row * 24 - outputBody.clientHeight / 2);
+    paintOutput();
+    output.querySelector('mark.find-current')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+  }
+}
+function moveFind(direction) {
+  const count = findState.matches.length;
+  if (!count) return;
+  findState.current = (findState.current + direction + count) % count;
+  updateFindCount();
+  paintInputMatches();
+  revealFindMatch();
+}
+function markOutputMatches(content, row) {
+  if (findBar.hidden || findState.scope !== 'output') return;
+  const needle = findQuery.value;
+  if (!needle) return;
+  const active = findState.matches[findState.current];
+  const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let offset = 0;
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    nodes.push({ node, offset });
+    offset += node.length;
+  }
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const matches = [...content.textContent.matchAll(new RegExp(escaped, 'gi'))];
+  for (const { node, offset: start } of nodes) {
+    const fragment = document.createDocumentFragment();
+    let position = 0;
+    for (const match of matches) {
+      const from = Math.max(0, match.index - start);
+      const to = Math.min(node.length, match.index + match[0].length - start);
+      if (from >= to) continue;
+      fragment.append(document.createTextNode(node.data.slice(position, from)));
+      const mark = document.createElement('mark');
+      mark.className = active?.row === row && active.start === match.index ? 'find-current' : 'find-match';
+      mark.textContent = node.data.slice(from, to);
+      fragment.append(mark);
+      position = to;
+    }
+    fragment.append(document.createTextNode(node.data.slice(position)));
+    node.replaceWith(fragment);
+  }
+}
+function closeFind() {
+  findBar.hidden = true;
+  findState.matches = [];
+  findState.current = -1;
+  paintInputMatches();
+  paintOutput();
+  (findState.scope === 'input' ? input : output).focus({ preventScroll: true });
+}
+findQuery.addEventListener('input', refreshFind);
+findPrevious.addEventListener('click', () => moveFind(-1));
+findNext.addEventListener('click', () => moveFind(1));
+findBar.querySelector('#find-close').addEventListener('click', closeFind);
+document.addEventListener('keydown', (event) => {
+  if ((event.ctrlKey || event.metaKey) && !event.altKey && event.key.toLowerCase() === 'f') {
+    event.preventDefault();
+    findState.scope = lastEditor;
+    document.querySelector(`.${lastEditor}-pane .pane-header`).after(findBar);
+    findBar.hidden = false;
+    findQuery.setAttribute('aria-label', `Find in ${lastEditor}`);
+    findQuery.focus();
+    findQuery.select();
+    refreshFind();
+  } else if (!findBar.hidden && event.key === 'Escape') {
+    event.preventDefault();
+    closeFind();
+  } else if (!findBar.hidden && findBar.contains(event.target) && event.key === 'Enter') {
+    event.preventDefault();
+    moveFind(event.shiftKey ? -1 : 1);
+  }
+}, true);
