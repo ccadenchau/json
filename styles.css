@@ -10,7 +10,7 @@
 html, body { height: 100%; overflow: hidden; }
 body { margin: 0; }
 button { font: inherit; }
-.app { max-width: 1440px; height: 100vh; height: 100dvh; margin: auto; padding: clamp(16px, 5vh, 64px) 40px; }
+.app { width: 100%; max-width: 1600px; height: 100vh; height: 100dvh; margin: auto; padding: clamp(16px, 5vh, 64px) 40px; }
 main { height: 100%; min-height: 0; }
 .workspace { height: 100%; min-height: 0; display: flex; flex-direction: column; position: relative; background: #fff; border: 1px solid #dce5f0; border-radius: 14px; overflow: hidden; box-shadow: 0 12px 48px #234b8310; }
 .toolbar { flex-shrink: 0; min-height: 78px; padding: 18px 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; border-bottom: 1px solid var(--border); }
@@ -91,6 +91,10 @@ textarea::-webkit-scrollbar-corner, .output-body::-webkit-scrollbar-corner { bac
 .fold-summary { color: #8ba1bf; }
 
 .pane-header .icon-button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; padding: 6px; color: #7d8da4; }
+.pane-actions { gap: 4px; }
+.pane-actions [data-tooltip] { position: relative; }
+.pane-actions [data-tooltip]::after { content: attr(data-tooltip); position: absolute; top: calc(100% + 4px); left: 50%; transform: translateX(-50%); z-index: 10; padding: 4px 6px; border-radius: 4px; background: #263449; color: #fff; font: 10px/1.4 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; white-space: nowrap; pointer-events: none; visibility: hidden; }
+.pane-actions [data-tooltip]:hover::after, .pane-actions [data-tooltip]:focus-visible::after { visibility: visible; }
 .icon-button svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
 .icon-button:disabled:hover { color: #7d8da4; background: transparent; }
 .copy-button .copied-symbol, .copy-button.copied .copy-symbol { display: none; }

@@ -3,6 +3,8 @@
 const input = dquery('#input');
 const output = dquery('#output');
 const copy = dquery('#copy');
+const collapseAll = dquery('#collapse-all');
+const expandAll = dquery('#expand-all');
 const status = dquery('#status');
 const loading = dquery('#loading');
 const formatButton = dquery('#format');
@@ -183,11 +185,12 @@ function resetOutput() {
   dquery('#output-stats').textContent = '';
   dquery('#valid-indicator').textContent = '';
   copy.disabled = true;
+  collapseAll.disabled = expandAll.disabled = true;
   if (findState.scope === 'output') refreshFind();
   clearTimeout(copyTimer);
   copy.classList.remove('copied');
   copy.setAttribute('aria-label', 'Copy JSON');
-  copy.title = 'Copy JSON';
+  copy.dataset.tooltip = 'Copy JSON';
   dquery('#copy-label').textContent = '';
 }
 function updateInput() {
@@ -265,8 +268,21 @@ async function render(data, job) {
   dquery('#output-stats').textContent = `${data.lineCount.toLocaleString()} lines · ${data.bytes.toLocaleString()} bytes`;
   dquery('#valid-indicator').textContent = data.repaired ? '✓ Repaired JSON' : '✓ Valid JSON';
   copy.disabled = false;
+  collapseAll.disabled = expandAll.disabled = Object.keys(data.ends).length === 0;
   stopProcessing();
 }
+function setAllCollapsed(shouldCollapse) {
+  if (!outputData) return;
+  collapsed.clear();
+  if (shouldCollapse) {
+    for (const index of Object.keys(outputData.ends)) collapsed.add(Number(index));
+  }
+  rebuildVisibleLines();
+  outputBody.scrollTop = 0;
+  paintOutput();
+}
+collapseAll.addEventListener('click', () => setAllCollapsed(true));
+expandAll.addEventListener('click', () => setAllCollapsed(false));
 outputBody.addEventListener('scroll', paintOutput);
 output.addEventListener('click', (event) => {
   const button = event.target.closest('.fold-button');
@@ -340,13 +356,13 @@ copy.addEventListener('click', async () => {
     await navigator.clipboard.writeText(result);
     copy.classList.add('copied');
     copy.setAttribute('aria-label', 'Copied');
-    copy.title = 'Copied';
+    copy.dataset.tooltip = 'Copied';
     dquery('#copy-label').textContent = 'Copied';
     clearTimeout(copyTimer);
     copyTimer = setTimeout(() => {
       copy.classList.remove('copied');
       copy.setAttribute('aria-label', 'Copy JSON');
-      copy.title = 'Copy JSON';
+      copy.dataset.tooltip = 'Copy JSON';
       dquery('#copy-label').textContent = '';
     }, 1800);
   } catch {
